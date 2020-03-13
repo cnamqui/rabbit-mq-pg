@@ -1,0 +1,4 @@
+{
+    "mqServerConnectionOptions": "amqp://localhost:32779/",
+    "mqServiceTimeOut": 2000
+}
