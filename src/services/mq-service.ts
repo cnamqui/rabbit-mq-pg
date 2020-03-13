@@ -43,15 +43,28 @@ export class MQServiceConnection {
                 }, Number(config.get<string>('mqServiceTimeOut')) || 50000);
                 this.getResults(resultQueue.queue)
                     .then(resolve)
-                    .catch(reject)
-                    .finally(() => {
-                        //   this.close();
-                    });
+                    .catch(reject);
             });
-            // this.channel.bindQueue(resultRoutingKey,req)
         }
 
         return Promise.resolve();
+    }
+
+    async publishRequest(requestRoutingKey: string, payload: any): Promise<any> {
+        if (this.channel) {
+            const resultRoutingKey = uuid();
+            const jsonPayload = JSON.stringify({ resultRoutingKey, payload });
+            await this.assertExchange('work_exchange', 'direct', { durable: true });
+            if (this.channel.publish('work_exchange', requestRoutingKey, Buffer.from(jsonPayload))) {
+                console.log(`Published message on work_exchange, with routing key ${requestRoutingKey}`);
+            }
+            return {
+                exchange: 'result_exchange',
+                routingKey: resultRoutingKey,
+                requestPayload: payload,
+            };
+        }
+        throw new Error('Channel is closed');
     }
 
     private async getResults(queueName: string): Promise<any> {
